@@ -1,0 +1,26 @@
+{
+    "default_file": {
+        "预设1": {
+            "导出方式": {
+                "fbx": {
+                    "导出的fbx名称": "default.fbx",
+                    "导出的模型": [
+                        "model1",
+                        "model2"
+                    ]
+                },
+                "abc": {
+                    "导出的abc名称": "default.abc",
+                    "导出的模型": [
+                        "model1",
+                        "model2"
+                    ]
+                }
+            },
+            "导出是否烘培": false,
+            "不导出的模型": [
+                "BianZiShengD_geo"
+            ]
+        }
+    }
+}
