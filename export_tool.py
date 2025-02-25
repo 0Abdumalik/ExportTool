@@ -1,4 +1,3 @@
-
 #by malik
 #2025.2.21
 
@@ -311,7 +310,7 @@ class ExportTool(QtWidgets.QDialog):
             else:
                 self.folder_line_edit.setText(folder)
 
-    # 新增：切换任务面板选中状态（模拟选中效果）
+    # 新增：切换任务面板选中状态（模拟选中效果）    
     def toggle_task_selection(self, widget):
         # 为简单起见，设置一个属性 isSelected
         if hasattr(widget, "isSelected") and widget.isSelected:
@@ -442,21 +441,26 @@ class PresetManager(QtWidgets.QDialog):
         add_file_button.clicked.connect(self.add_file)
         remove_file_button = QtWidgets.QPushButton("删除文件名")
         remove_file_button.clicked.connect(self.remove_file)
+        rename_file_button = QtWidgets.QPushButton("更改文件名")
+        rename_file_button.clicked.connect(self.rename_file)
         file_button_layout.addWidget(add_file_button)
         file_button_layout.addWidget(remove_file_button)
+        file_button_layout.addWidget(rename_file_button)  # 新增更改按钮
         left_layout.addLayout(file_button_layout)
         self.preset_list_widget = QtWidgets.QListWidget()
         self.preset_list_widget.currentItemChanged.connect(self.on_preset_selected)
         left_layout.addWidget(QtWidgets.QLabel("预设列表："))
         left_layout.addWidget(self.preset_list_widget)
         preset_button_layout = QtWidgets.QHBoxLayout()
-        # 保存预设按钮为实例属性，便于后续控制状态
         self.add_preset_button = QtWidgets.QPushButton("添加预设")
         self.add_preset_button.clicked.connect(self.add_preset)
         self.remove_preset_button = QtWidgets.QPushButton("删除预设")
         self.remove_preset_button.clicked.connect(self.remove_preset)
+        rename_preset_button = QtWidgets.QPushButton("更改预设名")
+        rename_preset_button.clicked.connect(self.rename_preset)
         preset_button_layout.addWidget(self.add_preset_button)
         preset_button_layout.addWidget(self.remove_preset_button)
+        preset_button_layout.addWidget(rename_preset_button)  # 新增更改按钮
         left_layout.addLayout(preset_button_layout)
         splitter.addWidget(left_widget)
         right_widget = QtWidgets.QWidget()
@@ -525,6 +529,16 @@ class PresetManager(QtWidgets.QDialog):
         save_changes_button = QtWidgets.QPushButton("保存更改")
         save_changes_button.clicked.connect(self.save_preset_changes)
         main_layout.addWidget(save_changes_button)
+        # 新增日志模块
+        self.logTextEdit = QtWidgets.QTextEdit()
+        self.logTextEdit.setReadOnly(True)
+        main_layout.addWidget(QtWidgets.QLabel("日志"))
+        main_layout.addWidget(self.logTextEdit)
+
+    # 新增日志记录方法
+    def log_message(self, message):
+        if hasattr(self, 'logTextEdit'):
+            self.logTextEdit.append(message)
 
     # 新增方法：更新 JSON 文件列表
     def update_json_list(self):
@@ -643,10 +657,22 @@ class PresetManager(QtWidgets.QDialog):
         list_widget.addItems(models)
 
     def add_file(self):
-        filename, ok = QtWidgets.QInputDialog.getText(self, "添加文件名", "文件名:")
-        if ok and filename:
+        # 修改为输入框允许直接添加Maya当前打开的文件名，若未保存则提示
+        filename, ok = QtWidgets.QInputDialog.getText(
+            self, "添加文件名", "请输入文件名（留空则使用当前Maya文件名）："
+        )
+        if ok:
+            if not filename:
+                import maya.cmds as cmds
+                current_maya_file = cmds.file(q=True, sceneName=True)
+                if current_maya_file:
+                    filename = os.path.basename(current_maya_file)
+                else:
+                    QtWidgets.QMessageBox.warning(self, "提示", "当前Maya文件未保存，请先保存。")
+                    return
             self.presets[filename] = {}
             self.update_file_list()
+            self.log_message(f"添加文件名: {filename}")
 
     def remove_file(self):
         current_item = self.file_list_widget.currentItem()
@@ -718,9 +744,18 @@ class PresetManager(QtWidgets.QDialog):
         selection = cmds.ls(selection=True, long=False)
         if selection:
             for sel in selection:
-                # 去除命名空间部分（若存在冒号则取最后部分）
                 name = sel.split(':')[-1]
+                duplicate_found = False
+                # 检查 list_widget 是否已有相同名称的项，若存在则删除旧项实现覆盖
+                for i in range(list_widget.count()):
+                    if list_widget.item(i).text() == name:
+                        list_widget.takeItem(i)
+                        duplicate_found = True
+                        self.log_message(f"覆盖模型: {name}")
+                        break
                 list_widget.addItem(name)
+                if not duplicate_found:
+                    self.log_message(f"添加模型: {name}")
         else:
             QtWidgets.QMessageBox.warning(self, "提示", "场景中未选择任何模型。")
 
@@ -737,28 +772,29 @@ class PresetManager(QtWidgets.QDialog):
                 current_item.setText(model_name)
 
     def save_preset_changes(self):
-        # 保存右侧编辑的预设内容到当前选中的预设项
         current_file = self.file_list_widget.currentItem()
         current_preset = self.preset_list_widget.currentItem()
-        if current_file and current_preset:
-            filename = current_file.text()
-            preset_name = current_preset.text()
-            preset = self.presets.get(filename, {}).get(preset_name, {})
-            export_mode = {}
-            export_mode["fbx"] = {
-                "导出的fbx名称": self.fbx_name_edit.text().strip(),
-                "导出的模型": [self.fbx_models_list.item(i).text() for i in range(self.fbx_models_list.count())]
-            }
-            export_mode["abc"] = {
-                "导出的abc名称": self.abc_name_edit.text().strip(),
-                "导出的模型": [self.abc_models_list.item(i).text() for i in range(self.abc_models_list.count())]
-            }
-            preset["导出方式"] = export_mode
-            preset["导出是否烘培"] = self.bake_checkbox.isChecked()
-            preset["不导出的模型"] = [self.exclude_models_list.item(i).text() for i in range(self.exclude_models_list.count())]
-            self.presets[filename][preset_name] = preset
-            self.save_json()
-            QtWidgets.QMessageBox.information(self, "保存成功", "预设已保存。")
+        if not current_file or not current_preset:
+            QtWidgets.QMessageBox.warning(self, "提示", "请先选择对应的文件和预设。")
+            return
+        filename = current_file.text()
+        preset_name = current_preset.text()
+        preset = self.presets.get(filename, {}).get(preset_name, {})
+        export_mode = {}
+        export_mode["fbx"] = {
+            "导出的fbx名称": self.fbx_name_edit.text().strip(),
+            "导出的模型": [self.fbx_models_list.item(i).text() for i in range(self.fbx_models_list.count())]
+        }
+        export_mode["abc"] = {
+            "导出的abc名称": self.abc_name_edit.text().strip(),
+            "导出的模型": [self.abc_models_list.item(i).text() for i in range(self.abc_models_list.count())]
+        }
+        preset["导出方式"] = export_mode
+        preset["导出是否烘培"] = self.bake_checkbox.isChecked()
+        preset["不导出的模型"] = [self.exclude_models_list.item(i).text() for i in range(self.exclude_models_list.count())]
+        self.presets[filename][preset_name] = preset
+        self.save_json()
+        QtWidgets.QMessageBox.information(self, "保存成功", "预设已保存。")
 
     def clear_preset_details(self):
         # 清空右侧预设详情控件
@@ -768,6 +804,38 @@ class PresetManager(QtWidgets.QDialog):
         self.abc_name_edit.clear()
         self.bake_checkbox.setChecked(False)
         self.exclude_models_list.clear()
+
+    def rename_file(self):
+        current_item = self.file_list_widget.currentItem()
+        if current_item is None:
+            QtWidgets.QMessageBox.warning(self, "提示", "请先选择一个文件名。")
+            return
+        old_name = current_item.text()
+        new_name, ok = QtWidgets.QInputDialog.getText(self, "更改文件名", "新文件名：", text=old_name)
+        if ok and new_name and new_name != old_name:
+            if new_name in self.presets:
+                QtWidgets.QMessageBox.warning(self, "提示", "文件名已存在，请选择其他名称。")
+                return
+            self.presets[new_name] = self.presets.pop(old_name)
+            self.update_file_list()
+            self.log_message(f"更改文件名：{old_name} -> {new_name}")
+
+    def rename_preset(self):
+        file_item = self.file_list_widget.currentItem()
+        preset_item = self.preset_list_widget.currentItem()
+        if file_item is None or preset_item is None:
+            QtWidgets.QMessageBox.warning(self, "提示", "请先选择对应的文件及预设。")
+            return
+        filename = file_item.text()
+        old_preset = preset_item.text()
+        new_preset, ok = QtWidgets.QInputDialog.getText(self, "更改预设名", "新预设名：", text=old_preset)
+        if ok and new_preset and new_preset != old_preset:
+            if new_preset in self.presets.get(filename, {}):
+                QtWidgets.QMessageBox.warning(self, "提示", "该预设名已存在，请选择其他名称。")
+                return
+            self.presets[filename][new_preset] = self.presets[filename].pop(old_preset)
+            self.update_preset_list(filename)
+            self.log_message(f"更改预设名：{old_preset} -> {new_preset}")
 
 # 运行工具
 def show_export_tool():
