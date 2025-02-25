@@ -22,5 +22,67 @@
                 "BianZiShengD_geo"
             ]
         }
+    },
+    "DaMo_BLMQ.mb": {
+        "quanfbx": {
+            "导出方式": {
+                "fbx": {
+                    "导出的fbx名称": "",
+                    "导出的模型": [
+                        "toufa_mx",
+                        "shetou_mx",
+                        "xiaya_mx",
+                        "mianbu_mx",
+                        "eye_L_mx",
+                        "tui_mx",
+                        "shangya_mx",
+                        "eye_R_mx",
+                        "shangbansheng_mx",
+                        "pSphere1"
+                    ],
+                    "高级选项": {
+                        "包含选项": {
+                            "几何体": true,
+                            "平滑组": true,
+                            "逐顶点分割发现": false,
+                            "切线和次法线": true,
+                            "平滑网格": false,
+                            "选择集": true,
+                            "转化为Null对象": false,
+                            "保留实列": false,
+                            "引用的资源内容": false,
+                            "三角化": false,
+                            "NURBS曲面转化": "NURBS"
+                        },
+                        "动画": {
+                            "动画": true
+                        },
+                        "附加选项": {
+                            "使用场景名": true,
+                            "移除单一关键帧": true,
+                            "四元插值模式": "按照Euler插值重置采样"
+                        },
+                        "烘培动画": {
+                            "烘培动画": true,
+                            "开始": 10,
+                            "结束": 69,
+                            "步长": 1,
+                            "全部重采样": true
+                        },
+                        "变形模型": {
+                            "变形模型": true,
+                            "蒙皮": true,
+                            "混合变形": true
+                        }
+                    }
+                },
+                "abc": {
+                    "导出的abc名称": "",
+                    "导出的模型": []
+                }
+            },
+            "导出是否烘培": true,
+            "不导出的模型": []
+        }
     }
 }

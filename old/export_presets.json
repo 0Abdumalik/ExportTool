@@ -1,0 +1,52 @@
+{
+    "default_file": {
+        "预设1": {
+            "导出方式": {
+                "fbx": {
+                    "导出的fbx名称": "default.fbx",
+                    "导出的模型": [
+                        "model1",
+                        "model2"
+                    ]
+                },
+                "abc": {
+                    "导出的abc名称": "default.abc",
+                    "导出的模型": [
+                        "model1",
+                        "model2"
+                    ]
+                }
+            },
+            "导出是否烘培": false,
+            "不导出的模型": [
+                "BianZiShengD_geo"
+            ]
+        }
+    },
+    "DaMo_BLMQ.mb": {
+        "quanfbx": {
+            "导出方式": {
+                "fbx": {
+                    "导出的fbx名称": "",
+                    "导出的模型": [
+                        "toufa_mx",
+                        "shetou_mx",
+                        "xiaya_mx",
+                        "mianbu_mx",
+                        "eye_L_mx",
+                        "tui_mx",
+                        "shangya_mx",
+                        "eye_R_mx",
+                        "shangbansheng_mx"
+                    ]
+                },
+                "abc": {
+                    "导出的abc名称": "",
+                    "导出的模型": []
+                }
+            },
+            "导出是否烘培": true,
+            "不导出的模型": []
+        }
+    }
+}
