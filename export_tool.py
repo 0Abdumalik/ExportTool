@@ -1,5 +1,7 @@
 #by malik
 #2025.2.21
+#2502251752
+
 
 # 导入必要的模块
 import maya.cmds as cmds
